@@ -1,0 +1,15 @@
+.vs
+.vscode
+CMakeSettings.json
+
+imgui.ini
+build/
+out/
+
+common/images
+common/outputs
+
+*.html
+*.pptx
+*.pdf
+*.pyc

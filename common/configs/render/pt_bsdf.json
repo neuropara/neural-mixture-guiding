@@ -1,0 +1,28 @@
+{
+	"passes": [
+		{
+			"enable": true,
+			"name": "GuidedPathTracer",
+			"params": {
+				"nee": false,
+				"rr": 1,
+				"max_depth": 10,
+				"mode": "offline",
+				"budget": {
+					"type": "spp",
+					"value": 1000
+				}
+			}
+		},
+		{
+			"enable": true,
+			"name": "ErrorMeasurePass",
+			"params": {
+				"metric": "rel_mse",
+				"interval": 50,
+				"continuous": true,
+				"log": true
+			}
+		}
+	]
+}

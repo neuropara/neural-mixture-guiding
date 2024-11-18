@@ -1,0 +1,38 @@
+{
+	"passes": [
+		{
+			"enable": true,
+			"name": "GuidedPathTracer",
+			"params": {
+				"config": "common/configs/nn/base.json",
+				"nee": false,
+				"rr": 1,
+				"max_depth": 10,
+				"bsdf_fraction": 0.5,
+				"sample_weighting": true,
+				"auto_train": true,
+				"max_train_depth": 3,
+				"max_guided_depth": 10,
+				"training_budget_spp": 0.33,
+				"training_budget_time": 0.3,
+				"batch_per_frame": 5,
+				"batch_size": 393216,
+				"mode": "offline",
+				"budget": {
+					"type": "spp",
+					"value": 1000
+				}
+			}
+		},
+		{
+			"enable": true,
+			"name": "ErrorMeasurePass",
+			"params": {
+				"metric": "rel_mse",
+				"interval": 50,
+				"continuous": true,
+				"log": true
+			}
+		}
+	]
+}

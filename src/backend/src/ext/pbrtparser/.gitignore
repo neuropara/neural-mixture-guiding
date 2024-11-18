@@ -1,0 +1,10 @@
+*~
+*#
+bin
+*.user*
+build
+*.sw?
+tags
+.vscode
+test
+xcode

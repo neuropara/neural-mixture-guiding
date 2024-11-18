@@ -1,0 +1,41 @@
+Integrator "bdpt" "integer maxdepth" [ 7 ] 
+Transform [ 0.00502469 -0.00467005 -0.999977 -0 -0 0.999989 -0.00467011 -0 -0.999987 -2.33837e-005 -0.00500703 -0 -0.0699916 -3.9759 16.2341 1]
+Sampler "random" "integer pixelsamples" [ 64 ] 
+PixelFilter "triangle" "float xwidth" [ 1.000000 ] "float ywidth" [ 1.000000 ] 
+Film "image" "integer xresolution" [ 1024 ] "integer yresolution" [ 1024 ] "string filename" [ "veach-bidir.png" ] 
+Camera "perspective" "float fov" [ 35.000000 ] 
+WorldBegin
+	MakeNamedMaterial "Diffuse" "string type" [ "matte" ] "rgb Kd" [ 0.500000 0.500000 0.500000 ] 
+	MakeNamedMaterial "Glass" "string type" [ "glass" ] "float index" [ 1.500000 ] "bool remaproughness" [ "false" ] 
+	MakeNamedMaterial "Lamp" "string type" [ "metal" ] "rgb eta" [ 2.865601 2.119182 1.940077 ] "rgb k" [ 3.032326 2.056108 1.616293 ] "bool remaproughness" [ "false" ] "float uroughness" [ 0.250000 ] "float vroughness" [ 0.250000 ] 
+	MakeNamedMaterial "Wood" "string type" [ "matte" ] "rgb Kd" [ 0.329630 0.257976 0.150292 ] 
+	MakeNamedMaterial "Wall" "string type" [ "metal" ] "rgb eta" [ 1.657460 0.880369 0.521229 ] "rgb k" [ 9.223869 6.269523 4.837001 ] "bool remaproughness" [ "false" ] "float uroughness" [ 0.300000 ] "float vroughness" [ 0.300000 ] 
+	NamedMaterial "Lamp" 
+	Shape "plymesh" "string filename" [ "models/Mesh007.ply" ] 
+	NamedMaterial "Diffuse" 
+	Shape "plymesh" "string filename" [ "models/Mesh004.ply" ] 
+	AttributeBegin
+		AreaLightSource "diffuse" "rgb L" [ 523.257812 523.257812 523.257812 ] 
+		Shape "trianglemesh" "integer indices" [ 0 1 2 0 2 3 ] "point P" [ -2.75736 6 2.31365 -2.75736 6 2.86515 -2.20586 6 2.86515 -2.20586 6 2.31365 ] "normal N" [ 1.58516e-007 1 6.92894e-015 1.58516e-007 1 6.92894e-015 1.58516e-007 1 6.92894e-015 1.58516e-007 1 6.92894e-015 ] "float uv" [ 0 0 1 0 1 1 0 1 ] 
+	AttributeEnd
+	AttributeBegin
+		AreaLightSource "diffuse" "rgb L" [ 12048.178711 8605.841797 6196.206055 ] 
+		Shape "trianglemesh" "integer indices" [ 0 1 2 0 2 3 ] "point P" [ -2.74778 5.17227 -3.73363 -2.768 5.05027 -3.7902 -2.63386 5.03607 -3.80751 -2.61364 5.15807 -3.75094 ] "normal N" [ 0.070781 -0.429239 0.900413 0.070781 -0.429239 0.900413 0.070781 -0.429239 0.900413 0.070781 -0.429239 0.900413 ] "float uv" [ 0 0 1 0 1 1 0 1 ] 
+	AttributeEnd
+	NamedMaterial "Lamp" 
+	Shape "plymesh" "string filename" [ "models/Mesh001.ply" ] 
+	Shape "plymesh" "string filename" [ "models/Mesh005.ply" ] 
+	NamedMaterial "Diffuse" 
+	Shape "plymesh" "string filename" [ "models/Mesh008.ply" ] 
+	NamedMaterial "Glass" 
+	Shape "plymesh" "string filename" [ "models/Mesh002.ply" ] 
+	NamedMaterial "Diffuse" 
+	Shape "plymesh" "string filename" [ "models/Mesh011.ply" ] 
+	Shape "plymesh" "string filename" [ "models/Mesh003.ply" ] 
+	Shape "plymesh" "string filename" [ "models/Mesh009.ply" ] 
+	Shape "plymesh" "string filename" [ "models/Mesh006.ply" ] 
+	NamedMaterial "Wood" 
+	Shape "plymesh" "string filename" [ "models/Mesh000.ply" ] 
+	NamedMaterial "Wall" 
+	Shape "plymesh" "string filename" [ "models/Mesh010.ply" ] 
+WorldEnd
