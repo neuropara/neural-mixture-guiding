@@ -2,7 +2,7 @@
 
 This is our GPU prototype implementation of the work *Neural Parametric Mixtures for Path Guiding*. This work presents an lightweight alternative for neural path guding that is practical for GPU parallel rendering, not as expressive as implicit models (e.g., normalizing flow) but faster. In this version of code, we integrated our algorithm into a wavefront path tracer using OptiX and implemented networks with *tiny-cuda-nn*, while manually implementing the derivative computation routines. We also refer interested readers to a concurrent work [Online Neural Path Guiding with Normalized Anisotropic Spherical Gaussians](https://dl.acm.org/doi/10.1145/3649310) which contains a similar idea and comprehensive experiments.
 
-Sorry for this late, late release. I tried to make this codebase more stable&robust but has not been very successful, and may not have the time anymore. The main purpose of this code is to provide information about the actual implementation and scene/parameter setup. *Writing experiments or protoyping on this codebase is possibly unrecommended as it is not stable or bug-free...*  
+Sorry for this late, late release. I tried to make this codebase more stable&robust but have not been very successful, and may not have the time anymore. The main purpose of this code is to provide information about the actual implementation and scene/parameter setup. *Writing experiments or protoyping on this codebase is possibly unrecommended as it is not stable or bug-free...*  
 
 ### Building and Run
 
@@ -17,9 +17,17 @@ Sorry for this late, late release. I tried to make this codebase more stable&rob
 
 This project uses CMake to build, no additional setting is needed. Make sure cuda is installed and added to PATH. While it tries to guess the OptiX installation path (i.e., the default installation directory on Windows), you may specify the `OptiX_INSTALL_DIR` environment variable manually in case it failed.
 
-#### Run an experiment
+#### See the implementation in 1 min
 
-To run an experiment, two configuration file need to be provided via command line arguments: the scene configuration and the method configuration. We have provided some configurations (.json files) for equal-sample experiments in this code. Example: 
+![integration](common/images/integration.png)
+
+#### Interactive Rendering Mode (unstable)
+
+There is an interactive rendering mode where you can explore the scene by moving the camera with path guiding enabled. Use the interactive config to play with it: `common/configs/render/interactive.json`. Use LShift, LMButton, and scroll to control the orbit camera. Guiding is disabled by default in this mode, check the "Enable Training" box in the GUI -> GuidedPathTracer to enable guiding (and uncheck to disable it). You can also directly run `testbed.exe` without any arguments to enter this default configuration once the project is built.
+
+#### Offline Rendering Mode 
+
+To run an offline rendering task, two configuration file need to be provided via command line arguments: the scene configuration and the method configuration. We have provided some configurations (.json files) for equal-sample experiments in this code. Example: 
 
 ~~~bash
 build/src/testbed.exe -scene common/configs/scenes/veach-ajar.json -method common/configs/render/guided.json

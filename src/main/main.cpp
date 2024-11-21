@@ -16,7 +16,7 @@ extern "C" int main(int argc, char *argv[]) {
 	logInfo("Working directory: " + string(KRR_PROJECT_DIR));
 
 	string sceneConfig = "common/configs/scenes/veach-ajar.json";
-	string renderConfig = "common/configs/render/guided.json";
+	string renderConfig = "common/configs/render/interactive.json";
 	string globalConfig = "common/configs/mutable.json";
 
 	for (int i = 1; i < argc; i++) {

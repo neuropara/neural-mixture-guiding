@@ -1,0 +1,41 @@
+{
+	"passes": [
+		{
+			"enable": true,
+			"name": "GuidedPathTracer",
+			"params": {
+				"config": "common/configs/nn/base.json",
+				"nee": true,
+				"rr": 1,
+				"max_depth": 10,
+				"bsdf_fraction": 0.5,
+				"sample_weighting": false,
+				"auto_train": false,
+				"max_train_depth": 3,
+				"max_guided_depth": 6,
+				"training_budget_spp": 0.33,
+				"training_budget_time": 0.3,
+				"batch_per_frame": 5,
+				"train_pixel_stride": 2,
+				"batch_size": 393216,
+				"mode": "interactive"
+			}
+		},
+		{
+			"enable": true,
+			"name": "AccumulatePass",
+			"params": {
+				"spp": 0,
+				"mode": "accumulate"
+			}
+		},
+				{
+			"enable": true,
+			"name": "ToneMappingPass",
+			"params": {
+				"exposure": 0.2,
+				"operator": "aces"
+			}
+		}
+	]
+}

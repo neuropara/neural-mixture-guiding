@@ -6,7 +6,6 @@ imgui.ini
 build/
 out/
 
-common/images
 common/outputs
 
 *.html
