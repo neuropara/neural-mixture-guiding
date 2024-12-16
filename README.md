@@ -9,17 +9,13 @@ Sorry for this late, late release. I tried to make this codebase more stable&rob
 #### Requirements
 
 - Nvidia RTX GPU (with HWRT support).
-- OptiX **7.3+** and CUDA **11.4+** (but not all of them might work).
+- OptiX **7.3+** and CUDA **11.4+** (but not all of them might work, test on 11.5/11.8).
 - Vulkan SDK (**1.3+**).  
 - Newer versions of **MSVC** (**Windows only**).
 
 #### Building
 
 This project uses CMake to build, no additional setting is needed. Make sure cuda is installed and added to PATH. While it tries to guess the OptiX installation path (i.e., the default installation directory on Windows), you may specify the `OptiX_INSTALL_DIR` environment variable manually in case it failed.
-
-#### See the implementation in 1 min
-
-![integration](common/images/integration.png)
 
 #### Interactive Rendering Mode (unstable)
 
@@ -39,7 +35,7 @@ Containing the path to 3D scene file, camera configurations, etc. Specify this w
 
 ##### Method configuration  
 
-Containing the rendering method, and its parameters. Specify this with `-method`. Example: `common/configs/render/guided.json` and  `common/configs/render/pt_bsdf.json`. (The *guided* refers to NPM learning the full distribution, i.e., $L_i \times f_{\mathrm{s}}  \cos$).
+Containing the rendering method, and its parameters. Specify this with `-method`. Example: `common/configs/render/guided.json` and  `common/configs/render/pt_bsdf.json`. (The *guided* refers to NPM learning the full distribution, i.e., $L_i \times f_{\mathrm{s}}  \cos$). The meaning of the specific parameters in the configuration could be inspected in the [code](src/render/guided).
 
 ##### Run experiments with python script
 
@@ -52,10 +48,25 @@ The rendering code has some changes after the experiments, but the error metrics
 - The metric might have small perturbations from run to run as the parallel training sample collection & gradient reduction process is non-deterministic.
 - We even have observed a different training convergence and error due to switching CUDA versions. A recent test is on *CUDA 11.8* and seems OK. Example relative MSE result: 0.62(PT) and ~0.038(Guided) on Veach-Ajar (750SPP) in our environment. 
 
+#### See the implementation in 1 min
+
+<img src="common/images/integration.png" alt="integration" style="zoom: 25%;" />
+
+This integration scheme could be suitable for either CPU or GPU (wavefront/megakernel) renderer, while in this code base we used a toy wavefront ray tracer. Out implementation of this renderer is similar to PBRT-v4 but with interactive frame rates. When being integrated into a megakernel path tracer one might want specific APIs to handle the inline MLP inference and thread divergence (e.g., shader execution reordering).
+
 ### Issues
 
-**Missing Features**: the ***pixel sample weighting*** scheme (e.g., inverse-variance weighting) and ***learnable selection probability*** are not implemented in this version.  *In experiments and comparisons we disabled these features for all the methods.* An option is also provided to enable a simple pixel weighting scheme (`sample_weighting`, disabled by default) to scale down the weight of earlier samples, similar to that suggested by *Huang et al.* This could provide significant performance boost sometimes (e.g., relMSE from ~0.038 to ~0.030 in Veach-Ajar).
+**Missing Features**: the ***pixel sample weighting*** scheme (e.g., inverse-variance weighting) and ***learnable selection probability*** are not implemented in this version.  *In experiments and comparisons we disabled these features for all the methods.* An option is also provided to enable a simple pixel weighting scheme (`sample_weighting`, disabled by default) to scale down the weight of the earlier samples, similar to that suggested by *Huang et al.* 
 
 **Training Sample Collection**: in this implementation we used a workaround that limits the maximum depth for collecting samples to fit the sample count for the target batch size. In practice it is better to use an adaptive strategy, like auto-adjusting the training pixel strides.
 
-**Training Stability**: See the code for numerical stability considerations in the manual derivative computation.  We did not implement any gradient clipping schemes in this version while it's better to do so in practice, and we have observed some rare training crashes possibly due to this.
+**Could this facilitate real-time ray-tracing?**
+We believe yes, if with careful implementation. However, these local guiding techniques are often vulnerable to the high-frequency contribution from distance and drastic animated objects. This makes them hard to fit the distribution in large scale scenes with many lights. In general, ReSTIR-based methods are better alternatives for real-time ray tracing with practical overhead.
+
+**Is it comparable to the state-of-the-art?**
+Possibly no. In our experiments we only compared with PPG-based methods. In terms of equal-sample-rate quality we believe the normalizing flows (used in Neural Importance Sampling) should have the best modeling capability although computationally expensive. Moreover, the PPG technique is re-implemented with CUDA, which might result in some kind of performance loss in this code base than the original CPU ver. Our implementation and configuration used in PPG's experiments are in the supplemental material in the project website / DL page.
+
+**Possible future improvements for a more practical implementation?**
+(1) Shallower network if performance is in demand (quality would not degrade by too much when feature grids are used); (2) Zero-contribution sample culling (they will not contribute to gradients); (3) utilize HW-accelerated filtering to sample dense feature grids; (4) alternative output parameterization (e.g., $(x, y, z)$ instead of $(\theta, \phi)$).
+
+We feel some of the above aspects should have been discussed in the paper, but our knowledge is somewhat limited at that time, and we are sorry for that. In case of questions or issues welcome to [contact](mailto:2101213024@pku.edu.cn) the author (who is away from school/research now but might still be able to help) or the corresponding author.
