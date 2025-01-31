@@ -25,6 +25,7 @@ set(CMAKE_DEBUG_POSTFIX "")
 
 add_compile_definitions ("$<$<CONFIG:Debug>:KRR_DEBUG_BUILD>")
 
+list(APPEND CUDA_NVCC_FLAGS "-allow-unsupported-compiler")
 
 set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)

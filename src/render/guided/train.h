@@ -176,11 +176,10 @@ KRR_CALLABLE Vector3f normalizeSpatialCoord(const Vector3f& coord, AABB aabb) {
 	return Vector3f{ 0.5 } + (coord - aabb.center()) / aabb.diagonal();
 }
 
-__global__ void generate_training_data(const size_t nElements, 
-	uint trainPixelOffset, uint trainPixelStride, 
-	TrainBuffer* trainBuffer,
-	GuidedPixelStateBuffer* guidedState, 
-	const AABB sceneAABB);
+__global__ void generate_training_data(const size_t nElements, Vector2ui trainPixelOffset,
+									   Vector2ui trainPixelStride, Vector2ui trainingResolution,
+									   Vector2ui resolution, TrainBuffer *trainBuffer,
+									   GuidedPixelStateBuffer *guidedState, const AABB sceneAABB);
 
 __global__ void compute_dL_doutput_divergence(const size_t nElements,
 	precision_t* outputPrediction, GuidedOutput* outputReference,

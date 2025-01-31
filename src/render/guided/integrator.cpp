@@ -397,6 +397,7 @@ void GuidedPathTracer::beginFrame(RenderContext *context) {
 	mGuiding.trainState.enableTraining =
 		(mGuiding.isEnableTraining() || autoTrain) && !isTrainingFinished;
 	mGuiding.trainState.enableGuiding = mGuiding.isEnableTraining() || autoTrain;
+	mGuiding.trainState.resolution	  = getFrameSize();
 }
 
 void GuidedPathTracer::render(RenderContext *context) {
@@ -506,8 +507,8 @@ void GuidedPathTracer::Guidance::renderUI() {
 			maxGuidedDepth = max(0U, (uint)maxGuidedDepth);
 		if (ui::InputInt("Max train depth", (int*)&maxTrainDepth, 1))
 			maxTrainDepth = max(0U, min(maxTrainDepth, (uint) MAX_TRAIN_DEPTH));
-		if (ui::InputInt("Train pixel stride", (int*)&trainState.trainPixelStride, 1))
-			trainState.trainPixelStride = max(1U, trainState.trainPixelStride);
+		if (ui::InputInt2("Train pixel stride", (int*)&trainState.trainPixelStride))
+			trainState.trainPixelStride = trainState.trainPixelStride.cwiseMax(1);
 		if (ui::InputInt("Train batch size", (int*)&batchSize, 1))
 			batchSize = max(1U, min(batchSize, (uint)TRAIN_BATCH_SIZE));
 		if (ui::InputInt("Batch per frame", (int*)&batchPerFrame, 1, 1))
@@ -526,6 +527,8 @@ void GuidedPathTracer::renderUI(){
 	ui::Checkbox("Enable NEE", &enableNEE);
 	if (mGuiding.network) {	
 		ui::Text("Guidance");
+		ui::Checkbox("Auto adjust stride", &autoAdjustStride);
+		ui::InputFloat("Train loss scale", &trainingLossScale);
 		mGuiding.renderUI();
 	}
 	ui::Text("Debugging");
@@ -589,6 +592,37 @@ void GuidedPathTracer::resetTraining() {
 	numLossSamples = 0;
 }
 
+void GuidedPathTracer::updateTrainingStride(uint32_t numTrainingSamples) {
+	float tileSize =
+		float(mGuiding.trainState.trainPixelStride.x() * mGuiding.trainState.trainPixelStride.y());
+	float utilization = float(mGuiding.batchSize * mGuiding.batchPerFrame) /
+						float(numTrainingSamples);
+	float targetPeriod = tileSize / utilization;
+
+	Vector2ui trainingStride;
+	uint32_t tileSide = std::max(1u, uint32_t(std::sqrt(std::max(0.f, targetPeriod))));
+	trainingStride.x() = std::max(tileSide, minTrainingStride.x());
+	trainingStride.y() = std::max(tileSide, minTrainingStride.y());
+	while (targetPeriod - (trainingStride.x() + 1) * trainingStride.y() >= 0)
+		trainingStride.x() += 1;
+
+	bool acceptUpdate =
+		trainingStride.x() * trainingStride.y() <
+		mGuiding.trainState.trainPixelStride.x() * mGuiding.trainState.trainPixelStride.y();
+	acceptUpdate |= std::max(trainingStride.x() - mGuiding.trainState.trainPixelStride.x(), 0u) +
+			std::max(trainingStride.y() - mGuiding.trainState.trainPixelStride.y(), 0u) >=
+					1;
+
+	if (acceptUpdate) {
+		std::cout << "Record count: " << numTrainingSamples << std::endl
+				  << "Changing training stride: "
+				  << "(" << mGuiding.trainState.trainPixelStride.x() << ", "
+				  << mGuiding.trainState.trainPixelStride.y() << ") -> "
+				  << "(" << trainingStride.x() << ", " << trainingStride.y() << ")" << std::endl
+				  << std::flush;
+		mGuiding.trainState.trainPixelStride = trainingStride;
+	}
+}
 
 void GuidedPathTracer::inferenceStep(){
 	PROFILE("Inference");
@@ -618,12 +652,16 @@ void GuidedPathTracer::trainStep(){
 	const cudaStream_t& stream = mGuiding.stream;
 	std::shared_ptr<Network<float, precision_t>> network = mGuiding.network;
 	if (!network) logFatal("Network not initialized!");
-	uint numTrainPixels = maxQueueSize / mGuiding.trainState.trainPixelStride;
+	Vector2ui trainingResolution = mGuiding.trainState.getTrainingResolution();
+	uint numTrainPixels			 = trainingResolution.x() * trainingResolution.y();
 	LinearKernel(generate_training_data, stream, numTrainPixels,
 		mGuiding.trainState.trainPixelOffset, mGuiding.trainState.trainPixelStride,
+				 trainingResolution, getFrameSize(),
 				 trainBuffer, guidedState, mScene->getBoundingBox());
 	cudaDeviceSynchronize();
 	numTrainingSamples = trainBuffer->size();
+	if (autoAdjustStride)
+		updateTrainingStride(numTrainingSamples);
 	
 	uint numTrainBatches = min((uint)numTrainingSamples / mGuiding.batchSize + 1, mGuiding.batchPerFrame);
 	for (int iter = 0; iter < numTrainBatches; iter++) {
@@ -646,14 +684,15 @@ void GuidedPathTracer::trainStep(){
 #if GUIDED_LEARN_SELECTION
 			LinearKernel(compute_dL_doutput_with_selection, stream, localBatchSize,
 						 networkOutputs.data(), outputData, dL_doutput.data(), lossBuffer.data(),
-						 TRAIN_LOSS_SCALE, mGuiding.divergence_type);
+						 trainingLossScale, mGuiding.divergence_type);
 #else
 			LinearKernel(compute_dL_doutput_divergence, stream, localBatchSize,
-				networkOutputs.data(), outputData, dL_doutput.data(), lossBuffer.data(), TRAIN_LOSS_SCALE, mGuiding.divergence_type);
+						 networkOutputs.data(), outputData, dL_doutput.data(), lossBuffer.data(),
+						 trainingLossScale, mGuiding.divergence_type);
 #endif
 			
 			network->backward(stream, *ctx, networkInputs, networkOutputs, dL_doutput, nullptr, false, EGradientMode::Overwrite);
-			mGuiding.trainer->optimizer_step(stream, TRAIN_LOSS_SCALE);
+			mGuiding.trainer->optimizer_step(stream, trainingLossScale);
 			
 			float loss = thrust::reduce(thrust::device, lossBuffer.data(), lossBuffer.data() + localBatchSize, 0.f, thrust::plus<float>());
 			curLossScalar.update(loss / localBatchSize);

@@ -3,8 +3,8 @@
 CMakeSettings.json
 
 imgui.ini
-build/
 out/
+build/*
 
 common/outputs
 

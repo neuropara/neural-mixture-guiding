@@ -11,15 +11,20 @@ KRR_CALLABLE float warp_roughness_for_ob(const float roughness) {
 	return 1 - expf(-roughness);
 }
 
-__global__ void generate_training_data(const size_t nElements,
-	uint trainPixelOffset, uint trainPixelStride,
-	TrainBuffer* trainBuffer,
-	GuidedPixelStateBuffer* guidedState,
-	const AABB sceneAABB) {
+__global__ void generate_training_data(const size_t nElements, Vector2ui trainPixelOffset,
+									   Vector2ui trainPixelStride, 
+	Vector2ui trainingResolution, Vector2ui resolution, 
+	TrainBuffer* trainBuffer, GuidedPixelStateBuffer* guidedState, const AABB sceneAABB) {
 	// this costs about 0.5ms
 	const size_t tid = threadIdx.x + blockIdx.x * blockDim.x;
 	if (tid >= nElements) return;
-	int pixelId = trainPixelOffset + tid * trainPixelStride;
+
+	Vector2ui trainigIdInTile{ tid % trainingResolution.x(), tid / trainingResolution.x() };
+	Vector2ui pixel = trainigIdInTile.cwiseProduct(trainPixelStride) + trainPixelOffset;
+	if (pixel.x() >= resolution.x() || pixel.y() >= resolution.y())
+		return;
+
+	int pixelId = pixel.x() + pixel.y() * resolution.x();
 	
 	int depth = guidedState->curDepth[pixelId];
 	for (int curDepth = 0; curDepth < depth; curDepth++) {

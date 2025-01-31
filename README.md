@@ -1,21 +1,18 @@
 # Neural Mixture Guiding 
 
-This is our GPU prototype implementation of the work *Neural Parametric Mixtures for Path Guiding*. This work presents an lightweight alternative for neural path guding that is practical for GPU parallel rendering, not as expressive as implicit models (e.g., normalizing flow) but faster. In this version of code, we integrated our algorithm into a wavefront path tracer using OptiX and implemented networks with *tiny-cuda-nn*, while manually implementing the derivative computation routines. We also refer interested readers to a concurrent work [Online Neural Path Guiding with Normalized Anisotropic Spherical Gaussians](https://dl.acm.org/doi/10.1145/3649310) which contains a similar idea and comprehensive experiments.
-
-Sorry for this late, late release. I tried to make this codebase more stable&robust but have not been very successful, and may not have the time anymore. The main purpose of this code is to provide information about the actual implementation and scene/parameter setup. *Writing experiments or protoyping on this codebase is possibly unrecommended as it is not stable or bug-free...*  
+This is our GPU prototype implementation of the work *Neural Parametric Mixtures for Path Guiding*. This work presents an lightweight alternative for neural path guding that is practical for GPU parallel rendering, letting the MLP predict the parameterized analytical mixtures, which may not as expressive as implicit models (e.g., normalizing flow) but faster. In this version of code, we integrated our algorithm into a wavefront path tracer using OptiX and implemented networks with *tiny-cuda-nn*, while manually implementing the derivative computation routines. We also refer interested readers to a concurrent work [Online Neural Path Guiding with Normalized Anisotropic Spherical Gaussians](https://dl.acm.org/doi/10.1145/3649310) which contains a similar idea and comprehensive experiments.
 
 ### Building and Run
 
 #### Requirements
 
 - Nvidia RTX GPU (with HWRT support).
-- OptiX **7.3+** and CUDA **11.4+** (but not all of them might work, test on 11.5/11.8).
-- Vulkan SDK (**1.3+**).  
+- OptiX **7.3+** and CUDA **11.4+** (but not all of them might work, tested on 11.5/11.8).
 - Newer versions of **MSVC** (**Windows only**).
 
 #### Building
 
-This project uses CMake to build, no additional setting is needed. Make sure cuda is installed and added to PATH. While it tries to guess the OptiX installation path (i.e., the default installation directory on Windows), you may specify the `OptiX_INSTALL_DIR` environment variable manually in case it failed.
+This project uses CMake to build, no additional setting is needed. Make sure cuda is installed and added to PATH. While it tries to guess the OptiX installation path (i.e., the default installation directory on Windows), you may specify the `OptiX_INSTALL_DIR` environment variable manually in case it failed. Refer to the CI [configuration file](.github/workflows/main.yml) for a tested environment setup and build steps.
 
 #### Interactive Rendering Mode (unstable)
 
@@ -46,7 +43,7 @@ If the pybind11 python binding is built successfully, the renderer could be call
 The rendering code has some changes after the experiments, but the error metrics should still be similar, hopefully if nothing goes wrong. However,
 
 - The metric might have small perturbations from run to run as the parallel training sample collection & gradient reduction process is non-deterministic.
-- We even have observed a different training convergence and error due to switching CUDA versions. A recent test is on *CUDA 11.8* and seems OK. Example relative MSE result: 0.62(PT) and ~0.038(Guided) on Veach-Ajar (750SPP) in our environment. 
+- We even have observed a different training convergence and error due to switching CUDA versions. A recent test is on *CUDA 11.8 and 12.1* and seems OK. 
 
 #### See the implementation in 1 min
 
@@ -58,10 +55,8 @@ This integration scheme could be suitable for either CPU or GPU (wavefront/megak
 
 **Missing Features**: the ***pixel sample weighting*** scheme (e.g., inverse-variance weighting) and ***learnable selection probability*** are not implemented in this version.  *In experiments and comparisons we disabled these features for all the methods.* An option is also provided to enable a simple pixel weighting scheme (`sample_weighting`, disabled by default) to scale down the weight of the earlier samples, similar to that suggested by *Huang et al.* 
 
-**Training Sample Collection**: in this implementation we used a workaround that limits the maximum depth for collecting samples to fit the sample count for the target batch size. In practice it is better to use an adaptive strategy, like auto-adjusting the training pixel strides.
-
 **Could this facilitate real-time ray-tracing?**
-We believe yes, if with careful implementation. However, these local guiding techniques are often vulnerable to the high-frequency contribution from distance and drastic animated objects. This makes them hard to fit the distribution in large scale scenes with many lights. In general, ReSTIR-based methods are better alternatives for real-time ray tracing with practical overhead.
+We believe yes if with careful implementation. However, these local guiding techniques are often vulnerable to the high-frequency contribution from distance and drastic animated objects. This makes them hard to fit the distribution in large scale scenes with many lights. In general, ReSTIR-based methods are better alternatives for real-time ray tracing with practical overhead.
 
 **Is it comparable to the state-of-the-art?**
 Possibly no. In our experiments we only compared with PPG-based methods. In terms of equal-sample-rate quality we believe the normalizing flows (used in Neural Importance Sampling) should have the best modeling capability although computationally expensive. Moreover, the PPG technique is re-implemented with CUDA, which might result in some kind of performance loss in this code base than the original CPU ver. Our implementation and configuration used in PPG's experiments are in the supplemental material in the project website / DL page.
