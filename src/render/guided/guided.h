@@ -23,7 +23,13 @@ public:
 	KRR_CALLABLE bool isEnableTraining() const { return enableTraining; }
 
 	KRR_CALLABLE bool isTrainingPixel(uint pixelId) const {
-		return enableTraining && (pixelId - trainPixelOffset) % trainPixelStride == 0;
+		Vector2ui pixel = { pixelId % resolution.x(), pixelId / resolution.x() };
+		return enableTraining && (pixel.x() - trainPixelOffset.x()) % trainPixelStride.x() == 0 &&
+			   (pixel.y() - trainPixelOffset.y()) % trainPixelStride.y() == 0;
+	}
+
+	KRR_CALLABLE Vector2ui getTrainingResolution() const {
+		return (resolution + trainPixelStride - Vector2ui::Ones()) / trainPixelStride;
 	}
 
 	KRR_HOST void renderUI() {
@@ -34,8 +40,9 @@ public:
 
 	bool enableTraining{ false };
 	bool enableGuiding{ false };
-	uint trainPixelOffset{ 0 };
-	uint trainPixelStride{ 1 };
+	Vector2ui resolution;
+	Vector2ui trainPixelOffset{ 0 };
+	Vector2ui trainPixelStride{ 1 };
 };
 
 typedef struct {

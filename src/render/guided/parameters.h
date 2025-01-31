@@ -5,7 +5,7 @@
 #define GUIDED_PRODUCT_SAMPLING		1
 #define GUIDED_LEARN_SELECTION		0
 
-constexpr unsigned int MAX_TRAIN_DEPTH		   = 4;
+constexpr unsigned int MAX_TRAIN_DEPTH		   = 8;
 constexpr unsigned int NETWORK_ALIGNMENT	   = 16;
 constexpr unsigned int NUM_VMF_COMPONENTS	   = 8 - GUIDED_LEARN_SELECTION;
 constexpr unsigned int N_DIM_SPATIAL_INPUT	   = 3;

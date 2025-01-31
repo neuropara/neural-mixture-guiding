@@ -7,7 +7,7 @@
 				"config": "common/configs/nn/base.json",
 				"nee": true,
 				"rr": 1,
-				"max_depth": 10,
+				"max_depth": 6,
 				"bsdf_fraction": 0.5,
 				"sample_weighting": false,
 				"auto_train": false,
@@ -15,8 +15,10 @@
 				"max_guided_depth": 6,
 				"training_budget_spp": 0.33,
 				"training_budget_time": 0.3,
-				"batch_per_frame": 5,
-				"train_pixel_stride": 2,
+				"batch_per_frame": 2,
+				"train_pixel_stride": [1, 1],
+				"min_train_stride": [1, 1],
+				"auto_adjust_stride": true,
 				"batch_size": 393216,
 				"mode": "interactive"
 			}

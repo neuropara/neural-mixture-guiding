@@ -76,6 +76,7 @@ public:
 	void trainStep();
 	void resetTraining();
 	void inferenceStep();
+	void updateTrainingStride(uint32_t trainingSamples);
 
 	OptixBackend* backend;
 	Camera::CameraData* camera{ };
@@ -115,9 +116,12 @@ public:
 	RenderTask task{};
 	float trainingBudgetTime{ 0.3 };
 	float trainingBudgetSpp{ 0.25 };
+	float trainingLossScale{ TRAIN_LOSS_SCALE };
 	bool isTrainingFinished{ false };
 	bool autoTrain{ false };
+	bool autoAdjustStride{ false };
 	bool discardTraining{ false };		
+	Vector2ui minTrainingStride{ 1, 1 };
 	Film *renderedImage{ nullptr };
 
 	
@@ -136,8 +140,12 @@ public:
 		}
 
 		KRR_HOST void beginFrame() {
-			trainState.trainPixelOffset = trainState.trainPixelStride <= 1 ?
-				0 : sampler.get1D() * trainState.trainPixelStride;
+			trainState.trainPixelOffset = 0;
+			if (!trainState.trainPixelStride.isOnes()) {
+				Vector2f u					= sampler.get2D();
+				trainState.trainPixelOffset = Vector2ui{ u.x() * trainState.trainPixelStride.x(),
+														 u.y() * trainState.trainPixelStride.y() };
+			}
 		}
 
 		KRR_HOST void renderUI();
@@ -201,21 +209,25 @@ public:
 		p.probRR	  = j.value("rr", 0.8);
 		p.enableClamp = j.value("enable_clamp", false);
 		p.clampMax	  = j.value("clamp_max", 1e4f);
-		p.mGuiding.bsdfSamplingFraction = j.value("bsdf_fraction", 0.5);
-		p.mGuiding.sampleWeighting		= j.value("sample_weighting", false);
-		p.mGuiding.cosineAware			= j.value("cosine_aware", true);
-		p.mGuiding.misAware				= j.value("mis_aware", true);
-		p.mGuiding.guideTransmissive	= j.value("guide_transmissive", true);
-		p.mGuiding.productWithCosine	= j.value("product_cosine", false);
-		p.mGuiding.maxTrainDepth		= j.value("max_train_depth", 3);
-		p.mGuiding.maxGuidedDepth		= j.value("max_guided_depth", 10);
-		p.autoTrain						= j.value("auto_train", false);
-		p.discardTraining				= j.value("discard_training", false);
-		p.trainingBudgetSpp				= j.value("training_budget_spp", 0.25f);
-		p.trainingBudgetTime			= j.value("training_budget_time", 0.3f);
-		p.mGuiding.batchPerFrame		= j.value("batch_per_frame", 5);
-		p.mGuiding.batchSize			= j.value("batch_size", TRAIN_BATCH_SIZE);
-		p.task							= j.value("budget", RenderTask{});
+		p.mGuiding.bsdfSamplingFraction		   = j.value("bsdf_fraction", 0.5);
+		p.mGuiding.sampleWeighting			   = j.value("sample_weighting", false);
+		p.mGuiding.cosineAware				   = j.value("cosine_aware", true);
+		p.mGuiding.misAware					   = j.value("mis_aware", true);
+		p.mGuiding.guideTransmissive		   = j.value("guide_transmissive", true);
+		p.mGuiding.productWithCosine		   = j.value("product_cosine", false);
+		p.mGuiding.maxTrainDepth			   = j.value("max_train_depth", 3);
+		p.mGuiding.maxGuidedDepth			   = j.value("max_guided_depth", 10);
+		p.mGuiding.trainState.trainPixelStride = j.value("train_pixel_stride", Vector2ui{ 1, 1 });
+		p.autoTrain							   = j.value("auto_train", false);
+		p.autoAdjustStride					   = j.value("auto_adjust_stride", false);
+		p.minTrainingStride					   = j.value("min_train_stride", Vector2ui{ 1, 1 });
+		p.discardTraining					   = j.value("discard_training", false);
+		p.trainingBudgetSpp					   = j.value("training_budget_spp", 0.25f);
+		p.trainingBudgetTime				   = j.value("training_budget_time", 0.3f);
+		p.trainingLossScale					   = j.value("training_loss_scale", TRAIN_LOSS_SCALE);
+		p.mGuiding.batchPerFrame			   = j.value("batch_per_frame", 5);
+		p.mGuiding.batchSize				   = j.value("batch_size", TRAIN_BATCH_SIZE);
+		p.task								   = j.value("budget", RenderTask{});
 
 		CHECK_LOG(p.mGuiding.maxTrainDepth <= MAX_TRAIN_DEPTH, 
 				"Max train depth %d exceeds limit %d!", p.mGuiding.maxTrainDepth,
