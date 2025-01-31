@@ -90,10 +90,19 @@ add_custom_target (krr_soa_generated DEPENDS ${KRR_SOA_GENERATED})
 INCLUDE_DIRECTORIES (${KRR_INCLUDE_ALL})
 INCLUDE (${KRR_PROJECT_ROOT}/common/build/CompilePTX.cmake)
 
+CUDA_COMPILE_EMBED(WAVEFRONT_PTX ${KRR_SHADER_REL_DIR}render/wavefront/wavefront.cu krr-wavefront krr_soa_generated)
+SET(KRR_PTX_FILES
+	${WAVEFRONT_PTX}
+)
+
+ADD_LIBRARY (KRR_PTX STATIC ${KRR_PTX_FILES})
+ADD_DEPENDENCIES (KRR_PTX krr_soa_generated)
+
 SET(KRR_LIBS_ALL
 	cuda 
 	cublas
 	krr_ext
+	KRR_PTX
 	${CUDA_LIBRARIES}
 	krr_math
 	krr_cuda_cfg
@@ -105,6 +114,7 @@ ADD_LIBRARY ( krr_lib STATIC
 	${KRR_SOURCE}
 	${KRR_SOURCE_VULKAN}
 	${KRR_SOA_GENERATED}
+	${KRR_PTX_FILES}
 )
 
 SET_PROPERTY(TARGET krr_lib PROPERTY CUDA_SEPARABLE_COMPILATION ON)

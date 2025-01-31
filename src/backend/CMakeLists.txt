@@ -93,7 +93,7 @@ add_library (krr_cuda_cfg INTERFACE)
 target_compile_options (
 	krr_cuda_cfg
 	INTERFACE
-		"$<$<COMPILE_LANGUAGE:CUDA>:--std=c++17;--use_fast_math;--expt-relaxed-constexpr;--extended-lambda;--forward-unknown-to-host-compiler>"
+		"$<$<COMPILE_LANGUAGE:CUDA>:--std=c++17;--use_fast_math;--expt-relaxed-constexpr;--extended-lambda;--forward-unknown-to-host-compiler;-allow-unsupported-compiler>"
 		# Do not add debugging symbols when generating PTX files for OptiX (not supported).
 		"$<$<COMPILE_LANGUAGE:CUDA>:$<IF:$<AND:$<CONFIG:Debug>,$<NOT:$<BOOL:$<TARGET_PROPERTY:CUDA_PTX_COMPILATION>>>>,-G;-g,-lineinfo>>"
 )
